@@ -9,13 +9,20 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn new(args: &[String]) -> Result<Config, &'static str> {
+    pub fn new(mut args: env::Args) -> Result<Config, &'static str> {
         if args.len() < 3 {
             return Err("not enough arguments");
         }
 
-        let query = args[1].clone();
-        let filename = args[2].clone();
+        let query = match args.next() {
+            Some(arg) => arg, 
+            None => return Err("Didn't get a query string"),
+        }; 
+
+        let filename = match args.next() {
+            Some(arg) => arg, 
+            None => return Err("Didn't get a file name")
+        };
 
         let case_sensitive = env::var("CASE_INSENSITIVE").is_err();
 
@@ -44,15 +51,10 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
 }
 
 fn search<'a>(query: &str, contents: &'a str) -> Vec<&'a str> {
-    let mut results = Vec::new();
-
-    for line in contents.lines() {
-        if line.contains(query) {
-            results.push(line);
-        }
-    }
-
-    results
+    contents
+        .lines()
+        .filter(|line| line.contains(query))
+        .collect()
 }
 
 fn search_case_insensitive<'a>(query: &str, contents: &'a str) -> Vec<&'a str> {
@@ -68,9 +70,9 @@ fn search_case_insensitive<'a>(query: &str, contents: &'a str) -> Vec<&'a str> {
     results
 }
 
-fn check_help_flag(args: &[&str]) -> bool {
-    false
-}
+// fn check_help_flag(args: &[&str]) -> bool {
+//     false
+// }
 
 #[cfg(test)]
 mod search_tests {
@@ -104,21 +106,21 @@ Trust me.";
     }
 }
 
-#[cfg(test)]
-mod utility_tests {
+// #[cfg(test)]
+// mod utility_tests {
 
-    use super::*;
+//     use super::*;
 
-    #[test]
-    fn help_flag_test() {
-        let sample_args = vec![
-            vec!["filename", "-h"],
-            vec!["filename", "--help", "a"],
-            vec!["filename", "-h", "--help"],
-        ];
+//     #[test]
+//     fn help_flag_test() {
+//         let sample_args = vec![
+//             vec!["filename", "-h"],
+//             vec!["filename", "--help", "a"],
+//             vec!["filename", "-h", "--help"],
+//         ];
 
-        for args in sample_args {
-            assert!(check_help_flag(&args[..]));
-        }
-    }
-}
+//         for args in sample_args {
+//             assert!(check_help_flag(&args[..]));
+//         }
+//     }
+// }
